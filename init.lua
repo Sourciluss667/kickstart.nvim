@@ -149,13 +149,13 @@ vim.opt.list = true
 vim.opt.listchars = { tab = '» ', trail = '·', nbsp = '␣' }
 
 -- Preview substitutions live, as you type!
-vim.opt.inccommand = 'split'
+vim.opt.inccommand = 'nosplit'
 
 -- Show which line your cursor is on
 vim.opt.cursorline = true
 
 -- Minimal number of screen lines to keep above and below the cursor.
-vim.opt.scrolloff = 10
+vim.opt.scrolloff = 999
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
@@ -165,8 +165,8 @@ vim.opt.hlsearch = true
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
 -- Diagnostic keymaps
-vim.keymap.set('n', '∂', vim.diagnostic.goto_prev, { desc = 'Go to previous [D]iagnostic message' }) -- option + d
-vim.keymap.set('n', '∆', vim.diagnostic.goto_next, { desc = 'Go to next [D]iagnostic message' }) -- option + D
+vim.keymap.set('n', 'gE', vim.diagnostic.goto_prev, { desc = '[G]o to previous [E]rror' }) -- g + E
+vim.keymap.set('n', 'ge', vim.diagnostic.goto_next, { desc = '[G]o to next [E]rror' }) -- g + e
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, { desc = 'Show diagnostic [E]rror messages' })
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
