@@ -556,7 +556,51 @@ require('lazy').setup({
 
           -- Execute a code action, usually your cursor needs to be on top of an error
           -- or a suggestion from your LSP for this to activate.
-          map('<leader>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
+          map('<leader>ca', function()
+            vim.lsp.buf.code_action {
+              apply = true,
+            }
+          end, '[C]ode [A]ction')
+
+          map('<leader>co', function()
+            vim.lsp.buf.code_action {
+              apply = true,
+              context = {
+                only = { 'source.organizeImports' },
+                diagnostics = {},
+              },
+            }
+          end, '[C]ode [Organize] Imports')
+
+          map('<leader>cM', function()
+            vim.lsp.buf.code_action {
+              apply = true,
+              context = {
+                only = { 'source.addMissingImports' },
+                diagnostics = {},
+              },
+            }
+          end, '[C]ode Add [M]issing Imports')
+
+          map('<leader>cu', function()
+            vim.lsp.buf.code_action {
+              apply = true,
+              context = {
+                only = { 'source.removeUnused.ts' },
+                diagnostics = {},
+              },
+            }
+          end, '[C]ode Remove [U]nused Imports')
+
+          map('<leader>cD', function()
+            vim.lsp.buf.code_action {
+              apply = true,
+              context = {
+                only = { 'source.fixAll.ts' },
+                diagnostics = {},
+              },
+            }
+          end, '[C]ode Fix All [D]iagnostics')
 
           -- Opens a popup that displays documentation about the word under your cursor
           --  See `:help K` for why this keymap.
@@ -634,8 +678,45 @@ require('lazy').setup({
         --    https://github.com/pmizio/typescript-tools.nvim
         --
         -- But for many setups, the LSP (`tsserver`) will work just fine
-        -- tsserver = {},
-        --
+        tsserver = {
+          enabled = false,
+        },
+        vtsls = {
+          filetypes = {
+            'javascript',
+            'javascriptreact',
+            'javascript.jsx',
+            'typescript',
+            'typescriptreact',
+            'typescript.tsx',
+          },
+          settings = {
+            complete_function_calls = true,
+            vtsls = {
+              enableMoveToFileCodeAction = true,
+              autoUseWorkspaceTsdk = true,
+              experimental = {
+                completion = {
+                  enableServerSideFuzzyMatch = true,
+                },
+              },
+            },
+            typescript = {
+              updateImportsOnFileMove = { enabled = 'always' },
+              suggest = {
+                completeFunctionCalls = true,
+              },
+              inlayHints = {
+                enumMemberValues = { enabled = true },
+                functionLikeReturnTypes = { enabled = true },
+                parameterNames = { enabled = 'literals' },
+                parameterTypes = { enabled = true },
+                propertyDeclarationTypes = { enabled = true },
+                variableTypes = { enabled = false },
+              },
+            },
+          },
+        },
 
         lua_ls = {
           -- cmd = {...},
@@ -694,7 +775,7 @@ require('lazy').setup({
           require('conform').format { async = true, lsp_fallback = true }
         end,
         mode = '',
-        desc = '[F]ormat buffer',
+        desc = '[,] Format buffer',
       },
     },
     opts = {
@@ -716,7 +797,10 @@ require('lazy').setup({
         --
         -- You can use a sub-list to tell conform to run *until* a formatter
         -- is found.
-        -- javascript = { { "prettierd", "prettier" } },
+        javascript = { { 'prettierd', 'prettier' }, { 'eslint_d', 'eslint' } },
+        javascriptreact = { { 'prettierd', 'prettier' }, { 'eslint_d', 'eslint' } },
+        typescript = { { 'prettierd', 'prettier' }, { 'eslint_d', 'eslint' } },
+        typescriptreact = { { 'prettierd', 'prettier' }, { 'eslint_d', 'eslint' } },
       },
     },
   },
@@ -933,10 +1017,10 @@ require('lazy').setup({
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
   -- require 'kickstart.plugins.debug',
-  -- require 'kickstart.plugins.indent_line',
-  -- require 'kickstart.plugins.lint',
-  -- require 'kickstart.plugins.autopairs',
-  -- require 'kickstart.plugins.neo-tree',
+  require 'kickstart.plugins.indent_line',
+  require 'kickstart.plugins.lint',
+  require 'kickstart.plugins.autopairs',
+  require 'kickstart.plugins.neo-tree',
   -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
