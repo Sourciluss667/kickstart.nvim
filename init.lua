@@ -198,7 +198,13 @@ vim.keymap.set('n', '<S-TAB>', ':bprev<Return>', { desc = 'Go to next buffer' })
 
 vim.keymap.set('n', '<leader>sv', ':vsplit<Return>', { desc = '[S]plit editor [V]ertically' })
 vim.keymap.set('n', '<leader>sh', ':split<Return>', { desc = '[S]plit editor [H]orizontally' })
-vim.keymap.set('n', '<leader>sx', ':bdelete<Return>', { desc = '[X] Close buffer' })
+
+vim.keymap.set('n', '<leader>bd', ':BufDel<Return>', { desc = '[d] Close current buffer' })
+vim.keymap.set('n', '<leader>bD', ':BufDel!<Return>', { desc = '[D] Close current buffer (ignore changes)' })
+vim.keymap.set('n', '<leader>bo', ':BufDelOthers<Return>', { desc = '[o] Close others buffers' })
+vim.keymap.set('n', '<leader>bO', ':BufDelOthers!<Return>', { desc = '[O] Close others buffers (ignore changes)' })
+
+vim.keymap.set('n', '<leader>fb', ':Telescope file_browser path=%:p:h select_buffer=true<CR>', { desc = '[F]ile [B]rowser' })
 
 -- [[ Basic Autocommands ]]
 --  See `:help lua-guide-autocommands`
@@ -297,18 +303,25 @@ require('lazy').setup({
     'folke/which-key.nvim',
     event = 'VimEnter', -- Sets the loading event to 'VimEnter'
     config = function() -- This is the function that runs, AFTER loading
-      require('which-key').setup()
+      require('which-key').setup {
+        win = {
+          wo = {
+            winblend = 10,
+          },
+        },
+      }
 
       -- Document existing key chains
-      require('which-key').register {
-        ['<leader>c'] = { name = '[C]ode', _ = 'which_key_ignore' },
-        ['<leader>g'] = { name = '[G]it', _ = 'which_key_ignore' },
-        ['<leader>s'] = { name = '[S]plit', _ = 'which_key_ignore' },
-        ['<leader>d'] = { name = '[D]ocument', _ = 'which_key_ignore' },
-        ['<leader>r'] = { name = '[R]ename', _ = 'which_key_ignore' },
-        ['<leader>f'] = { name = '[F]ind', _ = 'which_key_ignore' },
-        ['<leader>w'] = { name = '[W]orkspace', _ = 'which_key_ignore' },
-        ['<leader>t'] = { name = '[T]oggle', _ = 'which_key_ignore' },
+      require('which-key').add {
+        { '<leader>c', group = '[C]ode' },
+        { '<leader>g', group = '[G]it' },
+        { '<leader>s', group = '[S]plit' },
+        { '<leader>d', group = '[D]ocument' },
+        { '<leader>b', group = '[B]uffer' },
+        { '<leader>r', group = '[R]ename' },
+        { '<leader>f', group = '[F]ind' },
+        { '<leader>w', group = '[W]orkspace' },
+        { '<leader>t', group = '[T]oggle' },
       }
     end,
   },
@@ -370,12 +383,28 @@ require('lazy').setup({
         -- You can put your default mappings / updates / etc. in here
         --  All the info you're looking for is in `:help telescope.setup()`
         --
-        -- defaults = {
-        --   mappings = {
-        --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
-        --   },
-        -- },
-        -- pickers = {}
+        defaults = {
+          file_ignore_patterns = {
+            'node_modules',
+          },
+          -- mappings = {
+          --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
+          --   },
+        },
+        pickers = {
+          buffers = {
+            show_all_buffers = true,
+            sort_lastused = true,
+            mappings = {
+              i = {
+                ['<c-d>'] = 'delete_buffer',
+              },
+              n = {
+                ['d'] = 'delete_buffer',
+              },
+            },
+          },
+        },
         extensions = {
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
@@ -440,6 +469,17 @@ require('lazy').setup({
         }
       end, { desc = '[ ] Find existing buffers' })
 
+      vim.keymap.set('n', '<leader>bf', function()
+        builtin.buffers {
+          respect_gitignore = true,
+          hidden = true,
+          grouped = true,
+          previewer = true,
+          initial_mode = 'normal',
+          layout_config = { height = 40 },
+        }
+      end, { desc = '[f] Find existing buffers' })
+
       -- Slightly advanced example of overriding default behavior and theme
       vim.keymap.set('n', '<leader>/', function()
         -- You can pass additional configuration to Telescope to change the theme, layout, etc.
@@ -462,6 +502,15 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>fn', function()
         builtin.find_files { cwd = vim.fn.stdpath 'config' }
       end, { desc = '[F]ind [N]eovim files' })
+    end,
+  },
+
+  {
+    'ojroques/nvim-bufdel',
+    config = function()
+      require('bufdel').setup {
+        quit = true,
+      }
     end,
   },
 
@@ -671,6 +720,10 @@ require('lazy').setup({
       --  - capabilities (table): Override fields in capabilities. Can be used to disable certain LSP features.
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
+      local fqbn = 'arduino:avr:mega'
+      local default_arduino_capabilities = vim.lsp.protocol.make_client_capabilities()
+      default_arduino_capabilities.textDocument.semanticTokens = vim.NIL
+      default_arduino_capabilities.workspace.semanticTokens = vim.NIL
       local servers = {
         -- clangd = {},
         -- gopls = {},
@@ -682,9 +735,7 @@ require('lazy').setup({
         --    https://github.com/pmizio/typescript-tools.nvim
         --
         -- But for many setups, the LSP (`tsserver`) will work just fine
-        tsserver = {
-          enabled = false,
-        },
+        -- Finally, we use only vstsls LSP because it's better
         vtsls = {
           filetypes = {
             'javascript',
@@ -721,7 +772,6 @@ require('lazy').setup({
             },
           },
         },
-
         lua_ls = {
           -- cmd = {...},
           -- filetypes = { ...},
@@ -735,6 +785,29 @@ require('lazy').setup({
               -- diagnostics = { disable = { 'missing-fields' } },
             },
           },
+        },
+        clangd = {
+          filetypes = { 'c', 'cpp', 'objc', 'objcpp' },
+        },
+        cmake = {
+          filetypes = { 'cmake' },
+        },
+        dockerls = {
+          filetypes = { 'dockerfile' },
+        },
+        zls = {
+          filetypes = { 'zig' },
+        },
+        arduino_language_server = {
+          cmd = {
+            'arduino-language-server',
+            '-cli-config',
+            '/Users/qcormand/Library/Arduino15/arduino-cli.yaml',
+            '-fqbn',
+            fqbn,
+          },
+          filetypes = { 'arduino', 'ino' },
+          capabilities = default_arduino_capabilities,
         },
       }
 
@@ -877,7 +950,7 @@ require('lazy').setup({
           -- Accept ([y]es) the completion.
           --  This will auto-import if your LSP supports it.
           --  This will expand snippets if the LSP sent a snippet.
-          ['<C-y>'] = cmp.mapping.confirm { select = true },
+          ['<Tab>'] = cmp.mapping.confirm { select = true },
 
           -- If you prefer more traditional completion keymaps,
           -- you can uncomment the following lines
